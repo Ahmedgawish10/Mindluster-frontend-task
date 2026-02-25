@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://mind-luster-apis.vercel.app/';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://mind-luster-apis.vercel.app';
 
 export async function fetchTasks() {
   const res = await fetch(`${API_BASE}/tasks`);
