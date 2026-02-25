@@ -1,5 +1,5 @@
 # React + Vite
-
+# note there are problem when deployed JSON server on vercel just use it in local until try again to solve it.
 ## ToDo Kanban App 
 
 A Kanban-style ToDo list with **React**, **Redux**, **React Query**, and **Material UI**. Drag-and-drop is implemented with 
