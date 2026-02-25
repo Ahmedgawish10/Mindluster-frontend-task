@@ -6,6 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSearch } from '@/todo/store/uiSlice';
 import { COLUMNS } from '@/todo/constants';
@@ -14,8 +15,6 @@ import { useTasksQuery, useCreateTask, useUpdateTask, useDeleteTask, useMoveTask
 import KanbanColumn from './KanbanColumn';
 import AddTaskDialog from './AddTaskDialog';
 import EditTaskDialog from './EditTaskDialog';
-
-const DATA_TRANSFER_TASK_KEY = 'application/todos';
 
 export default function KanbanBoard() {
   const dispatch = useDispatch();
@@ -32,24 +31,18 @@ export default function KanbanBoard() {
   const [defaultColumnForCreate, setDefaultColumnForCreate] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
-  const handleDragStart = useCallback((e, task) => {
-    e.dataTransfer.setData(DATA_TRANSFER_TASK_KEY, String(task.id));
-    e.dataTransfer.effectAllowed = 'move';
-  }, []);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
 
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const handleDrop = useCallback(
-    (e, targetColumn) => {
-      e.preventDefault();
-      const idStr = e.dataTransfer.getData(DATA_TRANSFER_TASK_KEY);
-      if (!idStr) return;
-      const id = Number(idStr);
-      if (Number.isNaN(id)) return;
-      moveTask.mutate({ id, body: { column: targetColumn } });
+  const handleDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+      if (!over) return;
+      const task = active.data.current?.task;
+      if (!task || task.column === over.id) return;
+      moveTask.mutate({ id: task.id, body: { column: over.id } });
     },
     [moveTask]
   );
@@ -124,23 +117,22 @@ export default function KanbanBoard() {
           </Button>
         </Box>
       ) : (
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-        {visibleColumns.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            columnId={col.id}
-            columnLabel={col.label}
-            allTasks={tasks}
-            search={search}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddTask={handleAddTask}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          />
-        ))}
-      </Box>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+          {visibleColumns.map((col) => (
+            <KanbanColumn
+              key={col.id}
+              columnId={col.id}
+              columnLabel={col.label}
+              allTasks={tasks}
+              search={search}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAddTask={handleAddTask}
+            />
+          ))}
+        </Box>
+      </DndContext>
       )}
       <AddTaskDialog
         open={addDialogOpen}

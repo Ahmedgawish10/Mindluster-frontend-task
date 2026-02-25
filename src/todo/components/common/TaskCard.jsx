@@ -5,6 +5,8 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 const priorityColors = {
   low: 'default',
@@ -24,16 +26,28 @@ function PriorityChip({ priority }) {
   );
 }
 
-export default function TaskCard({ task, onEdit, onDelete, onDragStart }) {
+export default function TaskCard({ task, onEdit, onDelete }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: String(task.id), data: { task } });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+    mb: 1,
+  };
+
   return (
     <Card
-      draggable
-      onDragStart={(e) => onDragStart(e, task)}
-      sx={{
-        cursor: 'grab',
-        '&:active': { cursor: 'grabbing' },
-        mb: 1,
-      }}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      sx={style}
     >
       <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Typography variant="subtitle2" fontWeight="bold" noWrap>
@@ -43,7 +57,7 @@ export default function TaskCard({ task, onEdit, onDelete, onDragStart }) {
           {task.description}
         </Typography>
         <PriorityChip priority={task.priority ?? 'medium'} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }} onPointerDown={(e) => e.stopPropagation()}>
           <IconButton size="small" sx={{ outline: 'none !important' }} onClick={() => onEdit(task)} aria-label="Edit">
             <EditIcon fontSize="small" />
           </IconButton>

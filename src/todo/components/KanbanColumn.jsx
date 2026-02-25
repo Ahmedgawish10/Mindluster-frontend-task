@@ -1,9 +1,9 @@
-import { useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
+import { useDroppable } from '@dnd-kit/core';
 import { filterTasks } from '@/todo/utils/filter';
 import TaskCard from './common/TaskCard';
 
@@ -22,24 +22,14 @@ export default function KanbanColumn({
   onEdit,
   onDelete,
   onAddTask,
-  onDragStart,
-  onDragOver,
-  onDrop,
 }) {
   const filtered = filterTasks(allTasks, search, columnId);
-
-  const handleDrop = useCallback(
-    (e) => {
-      e.preventDefault();
-      onDrop(e, columnId);
-    },
-    [columnId, onDrop]
-  );
+  const { setNodeRef, isOver } = useDroppable({ id: columnId });
 
   return (
     <Paper
-      onDragOver={onDragOver}
-      onDrop={handleDrop}
+      ref={setNodeRef}
+      data-column-id={columnId}
       sx={{
         minHeight: 320,
         p: 2,
@@ -47,7 +37,7 @@ export default function KanbanColumn({
         minWidth: 240,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#97a9bb24',
+        backgroundColor: isOver ? '#97a9bb44' : '#97a9bb24',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
@@ -89,7 +79,6 @@ export default function KanbanColumn({
             task={task}
             onEdit={onEdit}
             onDelete={onDelete}
-            onDragStart={onDragStart}
           />
         ))}
        <Button
